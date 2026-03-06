@@ -1,7 +1,6 @@
 import { configDotenv } from "dotenv";
 import { Bot, InlineKeyboard, InputFile, Keyboard } from "grammy";
 import { JSONFilePreset } from "lowdb/node";
-import { dirname } from "node:path";
 
 import type { Boquet, Preferences } from "./entities.js";
 
@@ -15,9 +14,9 @@ const boquets: Boquet[] = db.data.boquets;
 const bqNames: string[] = boquets.map((bq) => bq.name);
 
 const sizes: Record<string, { multiplier: number; label: string }> = {
-  s: { multiplier: 0.7, label: "S (-30%)" },
-  m: { multiplier: 1.0, label: "M (OG)" },
-  l: { multiplier: 1.3, label: "L (+30%)" },
+  s: { multiplier: 0.7, label: "S" },
+  m: { multiplier: 1.0, label: "M" },
+  l: { multiplier: 1.3, label: "L" },
 };
 
 bot.command("start", async (ctx) => {
@@ -108,7 +107,7 @@ bot.callbackQuery(/size-(s|m|l)/, async (ctx) => {
       `<b>${cleanLines.at(0)}</b>\n\n` +
       `${cleanLines.at(1)}\n\n` +
       `<blockquote>${cleanLines.at(2)}</blockquote>\n\n` +
-      `<b>ℹ️ Ціна розміру M: ${newPrice} UAH</b>`;
+      `<b>ℹ️ Ціна розміру ${config.label}: ${newPrice} UAH</b>`;
 
     try {
       await ctx.editMessageCaption({
