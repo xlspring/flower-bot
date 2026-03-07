@@ -1,17 +1,20 @@
-import { Bot } from "grammy";
-import { JSONFilePreset } from "lowdb/node";
+import {Bot, type Context} from "grammy";
 
-import { startConvo } from "./functions/startConvo.js";
-import { showCatalogue } from "./functions/showCatalogue.js";
-import { showBouquet } from "./functions/showBouquet.js";
-import { changeSize } from "./functions/changeSize.js";
-import { buyBoquet } from "./functions/buyBoquet.js";
+import { homeMenu } from "./handlers/homeMenu.js";
+import { showCatalogue } from "./handlers/showCatalogue.js";
+import { showBouquet } from "./handlers/showBouquet.js";
+import { changeSize } from "./handlers/changeSize.js";
+import { buyBoquet } from "./handlers/buyBoquet.js";
+import { firstTimeSetup } from "./handlers/firstTimeSetup.js";
+import { showSettings } from "./handlers/showSettings.js";
 
-import type { Boquet, Preferences } from "../../entities.js";
+import { db } from "../db/init.js";
 
-const db = await JSONFilePreset("boquets.json", { boquets: [] });
-const boquets: Boquet[] = db.data.boquets;
-const bqNames: string[] = boquets.map((bq) => bq.name);
+import { bouquetsTable } from "../db/schema.js";
+import {type ConversationFlavor, conversations, createConversation} from "@grammyjs/conversations";
+
+const bouquets = await db.select().from(bouquetsTable);
+const bqNames: string[] = bouquets.map((bq) => bq.name);
 
 const sizes: Record<string, { multiplier: number; label: string }> = {
     s: { multiplier: 0.7, label: "S" },
@@ -20,17 +23,22 @@ const sizes: Record<string, { multiplier: number; label: string }> = {
 };
 
 export function startBot(token: string) {
-    const bot: Bot = new Bot(token);
+    const bot = new Bot<ConversationFlavor<Context>>(token);
 
-    bot.command("start", async (ctx) => startConvo(ctx));
-    bot.hears("🏠 На головну", async (ctx) => startConvo(ctx));
+    bot.use(conversations());
+    bot.use(createConversation(firstTimeSetup));
+    bot.use(createConversation(showSettings));
+
+    bot.command("start", async (ctx) => homeMenu(ctx, true));
+    bot.hears("🏠 На головну", async (ctx) => homeMenu(ctx));
 
     bot.hears("Переглянути каталог", async (ctx) => showCatalogue(ctx, bqNames));
+    bot.hears("Налаштування", async (ctx) => await ctx.conversation.enter("showSettings"));
 
-    bot.hears(bqNames, async (ctx) => showBouquet(ctx, boquets));
+    bot.hears(bqNames, async (ctx) => showBouquet(ctx, bouquets));
 
     bot.callbackQuery(/size-([sml])/, async (ctx) =>
-        changeSize(ctx, boquets, sizes),
+        changeSize(ctx, bouquets, sizes),
     );
 
     bot.callbackQuery("buy-bq", async (ctx) => buyBoquet(ctx));

@@ -1,7 +1,6 @@
 import { InlineKeyboard } from "grammy";
 
 import type { Context } from "grammy";
-import type { Boquet } from "../entities.js";
 
 export const changeSize = async (
   ctx: Context,

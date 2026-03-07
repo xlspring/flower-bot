@@ -12,7 +12,7 @@ export const showCatalogue = async (ctx: Context, bqNames: string[]) => {
 
   const keyboard = Keyboard.from(chunkedNames).resized();
 
-  ctx.reply("Асортимент букетів", {
+  await ctx.reply("Асортимент букетів", {
     reply_markup: keyboard,
   });
 };
